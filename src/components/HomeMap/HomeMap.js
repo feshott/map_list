@@ -1,15 +1,16 @@
 import React, { Component } from 'react';
+import { observer } from 'mobx-react'
+import { action } from 'mobx'
+import store from '../../Store/Store'
 import { YMaps, Map, Placemark, Button } from 'react-yandex-maps';
 import './HomeMap.css';
 
+
+@observer
 export default class HomeMap extends Component {
-  state = {
-    routeList: [],
-    searchList: []
-  }
 
   setNumHome = (coordinates) => {
-    const checkList = this.props.checkList
+    const checkList = store.checkList
     const currPosition = coordinates.join(',')
     let numHome = ''
 
@@ -28,22 +29,22 @@ export default class HomeMap extends Component {
     return colorHomeList[zone]
   }
 
+  @action
   removeRouterList = () => {
-    this.setState({
-      routeList: []
-    })
+    store.routeList = []
   }
 
+  @action
   setRouterList = () => {
-    const checkList = this.props.checkList
+    const checkList = store.checkList
     const routeList = checkList.map(home => {
       return { type: 'wayPoint', point: home.position }
     })
-    this.setState({ routeList })
+    store.routeList = routeList
   }
 
   onApiAvaliable(ymaps) {
-    ymaps.route(this.state.routeList, {
+    ymaps.route(store.routeList, {
       multiRoute: true,
       routingMode: "pedestrian"
     }).done(function (route) {
@@ -54,26 +55,28 @@ export default class HomeMap extends Component {
     }, this);
   }
 
+  @action
   searchAddress = (e) => {
     e.preventDefault()
     const address = this.search.value
-    const searchList = this.props.homeList.filter(home => home.address.indexOf(address) !== -1)
-    this.setState({ searchList })
+    const searchList = store.homeList.filter(home => home.address.indexOf(address) !== -1)
+    store.searchList = searchList
     this.search.value = ''
   }
 
+  @action
   reloadSearchAddress = (e) => {
     e.preventDefault()
-    this.setState({ searchList: [] })
+    store.searchList = []
   }
 
   render() {
-    const { searchList } = this.state
-    const { homeList, changeCheckList } = this.props
+    const { routeList, searchList,homeList } = store
+    const { changeCheckList } = this.props
     const startPosition = { center: [55.7245, 37.561], zoom: 16 };
     return (
       <div className="home_map">
-        <YMaps key={this.state.routeList.length} onApiAvaliable={(ymaps) => this.onApiAvaliable(ymaps)}>
+        <YMaps key={routeList.length} onApiAvaliable={(ymaps) => this.onApiAvaliable(ymaps)}>
           <Map
             width={550}
             height={400}
