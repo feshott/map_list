@@ -1,4 +1,6 @@
 import React from 'react';
+import { observer } from 'mobx-react'
+
 import './ItemList.css';
 
 const colorHome = (zone) => {
@@ -9,7 +11,8 @@ const colorHome = (zone) => {
   return colorHomeList[zone]
 }
 
-const ItemList = ({ checkHomeInfo }) =>
+
+const ItemList = observer(({checkHomeInfo}) =>
   <div className="item_list">
     <div className={`number ${colorHome(checkHomeInfo.zone.name)}`}>{checkHomeInfo.zone.name}</div>
     <div className="address">
@@ -18,5 +21,6 @@ const ItemList = ({ checkHomeInfo }) =>
     </div>
     <div className="avatar" style={{ backgroundImage: `url('${checkHomeInfo.zone.chief.photo}')` }}></div>
   </div>
+)
 
 export default ItemList 

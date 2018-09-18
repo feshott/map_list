@@ -6,6 +6,8 @@ import HomeMap from './components/HomeMap/HomeMap'
 import store from './Store/Store'
 import './App.css';
 
+window.store = store
+
 @observer
 class App extends Component {
 
