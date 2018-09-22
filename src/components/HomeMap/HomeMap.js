@@ -9,13 +9,13 @@ import './HomeMap.css';
 @observer
 export default class HomeMap extends Component {
 
-  setNumHome = (coordinates) => {
+  setNumHome = (uid) => {
     const checkList = store.checkList
-    const currPosition = coordinates.join(',')
+    const currUid = uid
     let numHome = ''
 
     checkList.forEach((element, index) => {
-      if (element.position.join(',') === currPosition) numHome = index + 1
+      if (element === currUid) numHome = index + 1
     });
 
     return numHome
@@ -36,12 +36,21 @@ export default class HomeMap extends Component {
 
   @action
   setRouterList = () => {
+    const homeList = store.homeList
     const checkList = store.checkList
-    const routeList = checkList.map(home => {
-      return { type: 'wayPoint', point: home.position }
+
+    const routeList = checkList.map(uid => {
+      let newRouteItem
+      homeList.forEach((home, index) => {
+        if (home._uid === uid) {
+          newRouteItem = { type: 'wayPoint', point: homeList[index].position }
+        }
+      })
+      return newRouteItem
     })
     store.routeList = routeList
   }
+
 
   onApiAvaliable(ymaps) {
     ymaps.route(store.routeList, {
@@ -59,7 +68,8 @@ export default class HomeMap extends Component {
   searchAddress = (e) => {
     e.preventDefault()
     const address = this.search.value
-    const searchList = store.homeList.filter(home => home.address.indexOf(address) !== -1)
+    const searchListAddress = store.homeList.filter(home => home.address.indexOf(address) !== -1)
+    const searchList = searchListAddress.map(home => home._uid)
     store.searchList = searchList
     this.search.value = ''
   }
@@ -70,9 +80,29 @@ export default class HomeMap extends Component {
     store.searchList = []
   }
 
+  @action
+  changeCheckList = (event) => {
+    const homeList = store.homeList
+    const checkList = store.checkList
+
+    const checkHomeNum = event.originalEvent.target.properties._data.iconContent
+    const checkHomeUid = event.originalEvent.target.properties._data.homeDop
+
+    if (checkHomeNum) {
+      let newCheckList = checkList.slice(0, checkHomeNum - 1).concat(checkList.slice(checkHomeNum))
+      store.checkList = newCheckList
+    } else {
+      homeList.forEach((home, index) => {
+        if (home._uid === checkHomeUid) {
+          let newCheckList = [...checkList, homeList[index]._uid]
+          store.checkList = newCheckList
+        }
+      })
+    }
+  }
+
   render() {
-    const { routeList, searchList,homeList } = store
-    const { changeCheckList } = this.props
+    const { routeList, searchList, homeList } = store
     const startPosition = { center: [55.7245, 37.561], zoom: 16 };
     return (
       <div className="home_map">
@@ -83,23 +113,28 @@ export default class HomeMap extends Component {
             state={startPosition}
             instanceRef={(ref) => this.map = ref} >
 
-            {(searchList.length === 0 ? homeList : searchList).map((home, index) => {
-              return (
-                <Placemark
-                  key={index}
-                  properties={{
-                    iconContent: this.setNumHome(home.position),
-                    hintContent: home.zone.name,
-                  }}
-                  geometry={{
-                    coordinates: home.position
-                  }}
-                  options={{
-                    preset: this.colorHome(home.zone.name)
-                  }}
-                  onClick={changeCheckList}
-                />
-              )
+            {homeList.map((home, index) => {
+              if ((searchList.indexOf(home._uid) !== -1) || (searchList.length === 0)) {
+
+                return (
+                  <Placemark
+                    key={index}
+                    properties={{
+                      homeDop: home._uid,
+                      iconContent: this.setNumHome(home._uid),
+                      hintContent: home.zone.name,
+                    }}
+                    geometry={{
+                      coordinates: home.position
+                    }}
+                    options={{
+                      preset: this.colorHome(home.zone.name)
+                    }}
+                    onClick={this.changeCheckList}
+                  />
+                )
+              }
+              return null
             })}
 
             <Button
