@@ -1,6 +1,25 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { render } from "react-dom";
+
 import './index.css';
+import { Provider } from "mobx-react";
+import { AppContainer } from "react-hot-loader";
+
+import store from './Store/Store'
 import App from './App';
 
-ReactDOM.render(<App />, document.getElementById('root'));
+
+const renderApp = Component => {
+    render(
+        <AppContainer>
+            <Provider store={store}>
+                <App />
+            </Provider>
+        </AppContainer>,
+        document.getElementById("root")
+    );
+};
+
+renderApp(App);
+
+// ReactDOM.render(<App />, document.getElementById('root'));
